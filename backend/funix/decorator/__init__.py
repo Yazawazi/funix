@@ -500,9 +500,9 @@ def funix(
                             check_example_whitelist(prop_arg_name)
                     else:
                         if prop[1] in ["example", "whitelist"]:
-                            for index, prop_arg_name in enumerate(prop_arg_name):
-                                put_props_in_params(prop_arg_name, prop[1], prop[0][prop_arg_name][index])
-                                check_example_whitelist(prop_arg_name)
+                            for index, single_prop_arg_name in enumerate(prop_arg_name):
+                                put_props_in_params(prop_arg_name, prop[1], prop[0][single_prop_arg_name][index])
+                                check_example_whitelist(single_prop_arg_name)
                         elif prop[1] == "widget":
                             cached_result = parse_widget(prop[0][prop_arg_name])
                             for prop_arg_name_item in prop_arg_name:
@@ -557,6 +557,11 @@ def funix(
                 elif "optional" in decorated_params[function_arg_name] and \
                         decorated_params[function_arg_name]["optional"]:
                     decorated_params[function_arg_name]["default"] = None
+                if default_example is not inspect.Parameter.empty:
+                    if "example" in decorated_params[function_arg_name]:
+                        decorated_params[function_arg_name].get("example").append(default_example)
+                    else:
+                        decorated_params[function_arg_name]["example"] = [default_example]
                 if function_arg_name not in json_schema_props:
                     json_schema_props[function_arg_name] = {}
                 if "widget" in decorated_params[function_arg_name]:
@@ -584,7 +589,6 @@ def funix(
                             step = arg.step if type(arg.step) is int else 1
                             widget = [widget if isinstance(widget, str) else widget[0], f"slider[{arg.start},{arg.stop - 1},{arg.step}]"]
 
-
                 json_schema_props[function_arg_name] = get_type_widget_prop(
                     "object" if function_arg_type_dict is None else function_arg_type_dict["type"],
                     0,
@@ -596,10 +600,8 @@ def funix(
                     if prop_key in decorated_params[function_arg_name].keys():
                         json_schema_props[function_arg_name][prop_key] = decorated_params[function_arg_name][prop_key]
 
-                if "whitelist" in json_schema_props[function_arg_name] and "example" in json_schema_props[function_arg_name]:
-                    raise Exception(f"{function_name}: {function_arg_name} has both an example and a whitelist")
-
-                json_schema_props[function_arg_name]["customLayout"] = decorated_params[function_arg_name].get("customLayout", False)
+                json_schema_props[function_arg_name]["customLayout"] = \
+                    decorated_params[function_arg_name].get("customLayout", False)
 
                 if decorated_params[function_arg_name]["treat_as"] == "cell":
                     return_type_parsed = "array"
