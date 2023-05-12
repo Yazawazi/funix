@@ -1,0 +1,36 @@
+name: Build frontend and push to main branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: ".nvmrc"
+      - name: Install dependencies
+        run: yarn install
+        working-directory: frontend
+      - name: Build frontend
+        run: yarn funix:build
+        working-directory: frontend
+      - name: Set git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Push to main branch
+        run: |
+          git checkout -b main
+          git add backend/funix/build
+          git commit -m "chore: auto build frontend"
+          git push origin main
